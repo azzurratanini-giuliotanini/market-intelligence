@@ -618,21 +618,56 @@ async function analyzeText() {
     catch(e){ rc.innerHTML=`<div style="font-size:13px;">${raw}</div>`; return; }
     lastAnalyzed = p;
     const urgClass = {Alta:'urgenza-alta',Media:'urgenza-media',Bassa:'urgenza-bassa'}[p.urgenza]||'';
+    const serviziOpts = ['Consulenza','Marmi','Fit-out','Chiavi in mano','Posa','PM','Logistica'];
     rc.innerHTML=`
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
         <span style="font-size:16px;font-weight:500;color:var(--text);">${p.titolo}</span>
         <span class="badge ${badgeClass(p.tipo)}">${p.tipo}</span>
         <span class="${urgClass}" style="font-size:12px;">● Urgenza ${p.urgenza}</span>
       </div>
-      ${field('Localizzazione',p.localita)}
-      ${field('Valore stimato',p.valore)}
-      ${field('Committente',p.committente)}
-      ${field('Architetto / Studio',p.architetto)}
-      ${field('General Contractor',p.gc)}
-      ${field('Gancio commerciale GT','<strong>'+p.gancio+'</strong>')}
-      ${field('Servizi applicabili',p.servizi.map(s=>`<span class="tag">${s}</span>`).join(' '))}
-      ${field('Responsabile suggerito',avFull(p.responsabile))}
-      ${p.note_strategiche?field('Nota strategica',`<em>${p.note_strategiche}</em>`):''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        ${fieldStatic('Localizzazione',p.localita)}
+        ${fieldStatic('Valore stimato',p.valore)}
+        ${fieldStatic('Committente',p.committente)}
+        ${fieldStatic('Architetto / Studio',p.architetto)}
+        ${fieldStatic('General Contractor',p.gc)}
+      </div>
+      ${fieldStatic('Gancio AI',p.gancio)}
+      ${p.note_strategiche?fieldStatic('Nota strategica',`<em>${p.note_strategiche}</em>`):''}
+      <div style="border-top:1px solid var(--border-strong);margin:16px 0 14px;padding-top:14px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold);font-weight:600;margin-bottom:14px;">✏️ Scegli tu prima di aggiungere alla pipeline</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div class="form-field">
+            <label>Responsabile</label>
+            <select id="edit-resp">
+              <option value="Giulia" ${p.responsabile==='Giulia'?'selected':''}>Giulia Baccelli</option>
+              <option value="Massimo" ${p.responsabile==='Massimo'?'selected':''}>Massimo Corti</option>
+              <option value="Sandro" ${p.responsabile==='Sandro'?'selected':''}>Sandro Ramer</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Stato iniziale</label>
+            <select id="edit-status">
+              <option value="Nuova">Nuova</option>
+              <option value="Qualificata">Qualificata</option>
+              <option value="Assegnata">Assegnata</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field" style="margin-bottom:12px;">
+          <label>Servizi — deseleziona o aggiungi</label>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;">
+            ${serviziOpts.map(s=>`
+              <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:5px 11px;border:1px solid var(--border);border-radius:20px;background:var(--surface);">
+                <input type="checkbox" value="${s}" ${p.servizi&&p.servizi.includes(s)?'checked':''} style="accent-color:var(--gold-dark);"> ${s}
+              </label>`).join('')}
+          </div>
+        </div>
+        <div class="form-field">
+          <label>Gancio commerciale — modifica se vuoi</label>
+          <input type="text" id="edit-gancio" value="${p.gancio}" style="width:100%;">
+        </div>
+      </div>
     `;
   } catch(err){
     rc.innerHTML=`<span style="color:var(--coral);font-size:13px;">Errore. Riprova.</span>`;
@@ -642,15 +677,23 @@ async function analyzeText() {
 function field(label,val){
   return `<div class="result-field"><div class="result-label">${label}</div><div class="result-value">${val}</div></div>`;
 }
+function fieldStatic(label,val){
+  return `<div class="result-field"><div class="result-label">${label}</div><div class="result-value">${val}</div></div>`;
+}
 
 function addToPipeline(){
   if(!lastAnalyzed)return;
   const p=lastAnalyzed;
+  const resp = document.getElementById('edit-resp')?.value || p.responsabile;
+  const status = document.getElementById('edit-status')?.value || 'Nuova';
+  const gancio = document.getElementById('edit-gancio')?.value || p.gancio;
+  const checked = document.querySelectorAll('#result-content input[type=checkbox]:checked');
+  const servizi = checked.length ? Array.from(checked).map(c=>c.value) : p.servizi||[];
   pipeline.unshift({
     id:Date.now(), titolo:p.titolo, localita:p.localita, tipo:p.tipo,
-    valore:p.valore, status:"Nuova", committente:p.committente,
-    architetto:p.architetto, gc:p.gc, gancio:p.gancio,
-    servizi:p.servizi||[], responsabile:p.responsabile, data:today()
+    valore:p.valore, status, committente:p.committente,
+    architetto:p.architetto, gc:p.gc, gancio,
+    servizi, responsabile:resp, data:today()
   });
   lastAnalyzed=null;
   document.getElementById('raw-text').value='';

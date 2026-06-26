@@ -239,7 +239,7 @@
     <div id="sec-pipeline" class="section active">
       <div class="page-header">
         <div class="page-title">Pipeline opportunità</div>
-        <div class="page-sub">Cantieri, investimenti e bandi intercettati · Area Firenze + Milano</div>
+        <div class="page-sub" id="pipeline-sub">Caricamento dati da Google Sheets...</div>
       </div>
       <div class="metrics">
         <div class="metric-card gold">
@@ -268,6 +268,7 @@
         <select onchange="renderPipeline()" id="f-status"><option value="">Tutti gli stati</option><option>Nuova</option><option>Contattata</option><option>In corso</option><option>Persa</option><option>Chiusa</option></select>
         <select onchange="renderPipeline()" id="f-resp"><option value="">Tutti i responsabili</option><option value="GT Market Intelligence">GT Market Intelligence</option><option value="Giulia">Giulia</option><option value="Massimo">Massimo</option><option value="Sandro">Sandro</option><option value="Gabriella">Gabriella</option><option value="Laura">Laura</option><option value="Caterina">Caterina</option><option value="Lorenzo">Lorenzo</option><option value="Luigi">Luigi</option><option value="Gianluca">Gianluca</option><option value="Lorenza">Lorenza</option><option value="Michele">Michele</option><option value="Daniele">Daniele</option><option value="Antonella">Antonella</option></select>
         <div style="flex:1"></div>
+        <button class="btn" onclick="loadFromSheets()" style="margin-right:8px;">↻ Aggiorna</button>
         <button class="btn" onclick="toggleManualForm()" id="btn-manual">+ Inserimento manuale</button>
         <button class="btn btn-gold" onclick="goTo('analisi', document.querySelector('[onclick*=analisi]'))">+ Analisi AI</button>
       </div>
@@ -587,7 +588,37 @@ Analizza il testo e rispondi SOLO con un JSON valido, zero testo fuori:
   "note_strategiche": "1 frase su perché questo cantiere è rilevante per GT e chi contattare per primo"
 }`;
 
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbx-buvNRWHP3S_2WoryZgmHG0EzGcRSgtwQyXmaceky-cqQw5gS6bo5U3J51h_JbA6Jgw/exec';
+
 let pipeline = [];
+
+async function loadFromSheets() {
+  try {
+    const res = await fetch(SHEETS_URL);
+    const data = await res.json();
+    pipeline = data.map((row, i) => ({
+      id: i + 1,
+      titolo: row['Titolo'] || row['C'] || '—',
+      localita: row['Località'] || row['D'] || '—',
+      tipo: row['Tipo'] || row['E'] || 'Hospitality',
+      valore: row['Valore'] || row['F'] || 'N.D.',
+      status: row['Stato'] || row['M'] || 'Nuova',
+      committente: row['Committente'] || row['G'] || '—',
+      architetto: row['Architetto'] || row['H'] || '—',
+      gc: row['GC'] || row['I'] || '—',
+      gancio: row['Gancio GT'] || row['J'] || '—',
+      servizi: (row['Servizi'] || row['K'] || '').split(',').map(s=>s.trim()).filter(Boolean),
+      responsabile: row['Responsabile'] || row['L'] || '—',
+      inseritoDa: row['Inserito da'] || 'GT Market Intelligence',
+      data: row['Data'] || row['B'] || '—'
+    })).filter(r => r.titolo && r.titolo !== '—' && r.titolo !== 'Titolo');
+    renderPipeline();
+    document.getElementById('pipeline-sub').textContent = 'Dati in tempo reale da Google Sheets · Aggiornato ' + new Date().toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit'});
+  } catch(err) {
+    console.error('Errore caricamento Sheets:', err);
+    document.getElementById('pipeline-sub').textContent = 'Errore caricamento dati — controlla la connessione';
+  }
+}
 
 let lastAnalyzed = null;
 
@@ -970,7 +1001,7 @@ GiulioTanini Market Intelligence Radar 2026`;
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 document.getElementById('week-date').textContent=weekStr();
-renderPipeline();
+loadFromSheets();
 </script>
 </body>
 </html>

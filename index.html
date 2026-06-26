@@ -248,27 +248,108 @@
           <div class="metric-sub">opportunità attive</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Nuove questa settimana</div>
+          <div class="metric-label">Nuove</div>
           <div class="metric-value" id="m-new" style="color:var(--coral)">0</div>
-          <div class="metric-sub">da qualificare</div>
+          <div class="metric-sub">da assegnare</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Qualificate</div>
-          <div class="metric-value" id="m-qual" style="color:var(--green)">0</div>
-          <div class="metric-sub">pronte per contatto</div>
+          <div class="metric-label">In corso</div>
+          <div class="metric-value" id="m-qual" style="color:var(--teal)">0</div>
+          <div class="metric-sub">trattative aperte</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Assegnate</div>
-          <div class="metric-value" id="m-ass" style="color:var(--teal)">0</div>
-          <div class="metric-sub">in lavorazione</div>
+          <div class="metric-label">Chiuse</div>
+          <div class="metric-value" id="m-ass" style="color:var(--green)">0</div>
+          <div class="metric-sub">vinte questo mese</div>
         </div>
       </div>
       <div class="filters">
         <select onchange="renderPipeline()" id="f-tipo"><option value="">Tutte le tipologie</option><option>Hospitality</option><option>Residenziale</option><option>Retail</option><option>Corporate</option><option>Bando PA</option></select>
-        <select onchange="renderPipeline()" id="f-status"><option value="">Tutti gli stati</option><option>Nuova</option><option>Qualificata</option><option>Assegnata</option><option>Archiviata</option></select>
-        <select onchange="renderPipeline()" id="f-resp"><option value="">Tutti i responsabili</option><option value="Giulia">Giulia Baccelli</option><option value="Massimo">Massimo Corti</option><option value="Sandro">Sandro Ramer</option></select>
+        <select onchange="renderPipeline()" id="f-status"><option value="">Tutti gli stati</option><option>Nuova</option><option>Contattata</option><option>In corso</option><option>Persa</option><option>Chiusa</option></select>
+        <select onchange="renderPipeline()" id="f-resp"><option value="">Tutti i responsabili</option><option value="GT Market Intelligence">GT Market Intelligence</option><option value="Giulia">Giulia</option><option value="Massimo">Massimo</option><option value="Sandro">Sandro</option><option value="Gabriella">Gabriella</option><option value="Laura">Laura</option><option value="Caterina">Caterina</option><option value="Lorenzo">Lorenzo</option><option value="Luigi">Luigi</option><option value="Gianluca">Gianluca</option><option value="Lorenza">Lorenza</option><option value="Michele">Michele</option><option value="Daniele">Daniele</option><option value="Antonella">Antonella</option></select>
         <div style="flex:1"></div>
-        <button class="btn btn-gold" onclick="goTo('analisi', document.querySelector('[onclick*=analisi]'))">+ Nuova analisi AI</button>
+        <button class="btn" onclick="toggleManualForm()" id="btn-manual">+ Inserimento manuale</button>
+        <button class="btn btn-gold" onclick="goTo('analisi', document.querySelector('[onclick*=analisi]'))">+ Analisi AI</button>
+      </div>
+
+      <!-- FORM INSERIMENTO MANUALE -->
+      <div id="manual-form" style="display:none;" class="add-form">
+        <h3>+ Inserisci opportunità manualmente</h3>
+        <div class="form-grid-3">
+          <div class="form-field">
+            <label>Titolo / Progetto *</label>
+            <input type="text" id="m-titolo" placeholder="es. Hotel Bernini Palace Firenze">
+          </div>
+          <div class="form-field">
+            <label>Località *</label>
+            <input type="text" id="m-localita" placeholder="es. Firenze, FI">
+          </div>
+          <div class="form-field">
+            <label>Tipologia</label>
+            <select id="m-tipo">
+              <option value="Hospitality">Hospitality</option>
+              <option value="Residenziale">Residenziale</option>
+              <option value="Retail">Retail</option>
+              <option value="Corporate">Corporate</option>
+              <option value="Bando PA">Bando PA</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Valore stimato</label>
+            <input type="text" id="m-valore" placeholder="es. € 2.000.000">
+          </div>
+          <div class="form-field">
+            <label>Committente / Developer</label>
+            <input type="text" id="m-committente" placeholder="es. Starwood Capital">
+          </div>
+          <div class="form-field">
+            <label>Architetto / Studio</label>
+            <input type="text" id="m-architetto" placeholder="es. Studio Bonan">
+          </div>
+          <div class="form-field">
+            <label>General Contractor</label>
+            <input type="text" id="m-gc" placeholder="es. Cogefa Spa">
+          </div>
+          <div class="form-field">
+            <label>Inserito da *</label>
+            <select id="m-inserito">
+              <option value="">— Scegli —</option>
+              <option>GT Market Intelligence</option>
+              <option>Gabriella</option><option>Laura</option><option>Caterina</option>
+              <option>Lorenzo</option><option>Giulia</option><option>Luigi</option>
+              <option>Gianluca</option><option>Lorenza</option><option>Michele</option>
+              <option>Daniele</option><option>Antonella</option><option>Massimo</option><option>Sandro</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Responsabile commerciale</label>
+            <select id="m-resp">
+              <option value="">— Scegli —</option>
+              <option>Gabriella</option><option>Laura</option><option>Caterina</option>
+              <option>Lorenzo</option><option>Giulia</option><option>Luigi</option>
+              <option>Gianluca</option><option>Lorenza</option><option>Michele</option>
+              <option>Daniele</option><option>Antonella</option><option>Massimo</option><option>Sandro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field" style="margin-bottom:12px;">
+          <label>Gancio commerciale / Note</label>
+          <input type="text" id="m-gancio" placeholder="es. 20 bagni luxury, marmi pregiati, fit-out chiavi in mano">
+        </div>
+        <div class="form-field" style="margin-bottom:14px;">
+          <label>Servizi applicabili</label>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;">
+            ${['Consulenza','Marmi','Fit-out','Chiavi in mano','Posa','PM','Logistica'].map(s=>`
+              <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:5px 11px;border:1px solid var(--border);border-radius:20px;background:var(--surface);">
+                <input type="checkbox" class="m-servizio" value="${s}" style="accent-color:var(--gold-dark);"> ${s}
+              </label>`).join('')}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-gold" onclick="addManual()">+ Aggiungi alla pipeline</button>
+          <button class="btn" onclick="toggleManualForm()">Annulla</button>
+          <span id="manual-ok" style="font-size:12px;color:var(--green);display:none;">✓ Aggiunto!</span>
+        </div>
       </div>
       <div id="pipeline-list"></div>
     </div>
@@ -507,10 +588,10 @@ Analizza il testo e rispondi SOLO con un JSON valido, zero testo fuori:
 }`;
 
 let pipeline = [
-  {id:1, titolo:"Ristrutturazione Grand Hotel Excelsior", localita:"Firenze, FI", tipo:"Hospitality", valore:"€ 4.2M", status:"Qualificata", committente:"Starwood Capital Group", architetto:"Studio Citterio-Viel", gc:"Impresa Rossi Costruzioni", gancio:"30+ bagni luxury: marmi Calacatta, fit-out chiavi in mano, PM coordinamento cantiere", servizi:["Marmi","Fit-out","PM"], responsabile:"Giulia", data:"18 giu 2026"},
-  {id:2, titolo:"Complesso Residenziale Villa Pini", localita:"Forte dei Marmi, LU", tipo:"Residenziale", valore:"€ 7.8M", status:"Nuova", committente:"Sviluppo Immobiliare Versilia Srl", architetto:"Arch. Marco Savorelli", gc:"Da definire", gancio:"8 ville ultra-luxury: marmi bookmatched, bathroom chiavi in mano, logistica materiali", servizi:["Marmi","Chiavi in mano","Logistica"], responsabile:"Massimo", data:"22 giu 2026"},
-  {id:3, titolo:"Bando Riqualificazione Centro Congressi", localita:"Bologna, BO", tipo:"Bando PA", valore:"€ 2.1M", status:"Nuova", committente:"Comune di Bologna", architetto:"Da aggiudicare", gc:"Da aggiudicare", gancio:"Subappalto posa pavimentazioni pregio, fornitura materiali certificati", servizi:["Posa","Forniture"], responsabile:"Sandro", data:"24 giu 2026"},
-  {id:4, titolo:"Flagship Store Luxury Brand", localita:"Milano, MI", tipo:"Retail", valore:"€ 1.5M", status:"Assegnata", committente:"Maison XY (NDA)", architetto:"Studio Dimore Milano", gc:"Zanon Costruzioni", gancio:"Marmi bookmatched store design + posa di precisione + PM cantiere luxury retail", servizi:["Marmi","Posa","PM"], responsabile:"Giulia", data:"10 giu 2026"},
+  {id:1, titolo:"Ristrutturazione Grand Hotel Excelsior", localita:"Firenze, FI", tipo:"Hospitality", valore:"€ 4.2M", status:"In corso", committente:"Starwood Capital Group", architetto:"Studio Citterio-Viel", gc:"Impresa Rossi Costruzioni", gancio:"30+ bagni luxury: marmi Calacatta, fit-out chiavi in mano, PM coordinamento cantiere", servizi:["Marmi","Fit-out","PM"], responsabile:"Giulia", inseritoDa:"GT Market Intelligence", data:"18 giu 2026"},
+  {id:2, titolo:"Complesso Residenziale Villa Pini", localita:"Forte dei Marmi, LU", tipo:"Residenziale", valore:"€ 7.8M", status:"Nuova", committente:"Sviluppo Immobiliare Versilia Srl", architetto:"Arch. Marco Savorelli", gc:"Da definire", gancio:"8 ville ultra-luxury: marmi bookmatched, bathroom chiavi in mano, logistica materiali", servizi:["Marmi","Chiavi in mano","Logistica"], responsabile:"Massimo", inseritoDa:"GT Market Intelligence", data:"22 giu 2026"},
+  {id:3, titolo:"Bando Riqualificazione Centro Congressi", localita:"Bologna, BO", tipo:"Bando PA", valore:"€ 2.1M", status:"Contattata", committente:"Comune di Bologna", architetto:"Da aggiudicare", gc:"Da aggiudicare", gancio:"Subappalto posa pavimentazioni pregio, fornitura materiali certificati", servizi:["Posa","Forniture"], responsabile:"Sandro", inseritoDa:"Sandro", data:"24 giu 2026"},
+  {id:4, titolo:"Flagship Store Luxury Brand", localita:"Milano, MI", tipo:"Retail", valore:"€ 1.5M", status:"Chiusa", committente:"Maison XY (NDA)", architetto:"Studio Dimore Milano", gc:"Zanon Costruzioni", gancio:"Marmi bookmatched store design + posa di precisione + PM cantiere luxury retail", servizi:["Marmi","Posa","PM"], responsabile:"Giulia", inseritoDa:"Gabriella", data:"10 giu 2026"},
 ];
 
 let lastAnalyzed = null;
@@ -519,7 +600,7 @@ let lastAnalyzed = null;
 function badgeClass(tipo) {
   return {Hospitality:"badge-H",Residenziale:"badge-R",Retail:"badge-Re",Corporate:"badge-C","Bando PA":"badge-B"}[tipo]||"badge-C";
 }
-function dotClass(s) { return {Nuova:"dot-N",Qualificata:"dot-Q",Assegnata:"dot-A",Archiviata:"dot-Ar"}[s]||"dot-Ar"; }
+function dotClass(s) { return {Nuova:'dot-N',Contattata:'dot-A',['In corso']:'dot-Q',Persa:'dot-Ar',Chiusa:'dot-Q'}[s]||'dot-Ar'; }
 function avClass(r) { return {Giulia:"av-g",Massimo:"av-m",Sandro:"av-s"}[r]||"av-g"; }
 function avInit(r) { return {Giulia:"GB",Massimo:"MC",Sandro:"SR"}[r]||"?"; }
 function avFull(r) { return {Giulia:"Giulia Baccelli",Massimo:"Massimo Corti",Sandro:"Sandro Ramer"}[r]||r; }
@@ -542,17 +623,58 @@ function goTo(name, el) {
 }
 
 // ── PIPELINE ──────────────────────────────────────────────────────────────────
+const VENDITORI = ['GT Market Intelligence','Gabriella','Laura','Caterina','Lorenzo','Giulia','Luigi','Gianluca','Lorenza','Michele','Daniele','Antonella','Massimo','Sandro'];
+const STATI = ['Nuova','Contattata','In corso','Persa','Chiusa'];
+
+function dotClass(s) { return {Nuova:'dot-N',Contattata:'dot-A',['In corso']:'dot-Q',Persa:'dot-Ar',Chiusa:'dot-Q'}[s]||'dot-Ar'; }
+
+function toggleManualForm() {
+  const f = document.getElementById('manual-form');
+  f.style.display = f.style.display==='none' ? 'block' : 'none';
+}
+
+function addManual() {
+  const titolo = document.getElementById('m-titolo').value.trim();
+  const inserito = document.getElementById('m-inserito').value;
+  if(!titolo || !inserito){ alert('Inserisci almeno titolo e chi lo aggiunge.'); return; }
+  const servizi = Array.from(document.querySelectorAll('.m-servizio:checked')).map(c=>c.value);
+  pipeline.unshift({
+    id: Date.now(),
+    titolo,
+    localita: document.getElementById('m-localita').value||'—',
+    tipo: document.getElementById('m-tipo').value,
+    valore: document.getElementById('m-valore').value||'N.D.',
+    status: 'Nuova',
+    committente: document.getElementById('m-committente').value||'—',
+    architetto: document.getElementById('m-architetto').value||'—',
+    gc: document.getElementById('m-gc').value||'—',
+    gancio: document.getElementById('m-gancio').value||'—',
+    servizi,
+    responsabile: document.getElementById('m-resp').value||inserito,
+    inseritoDa: inserito,
+    data: today()
+  });
+  // reset form
+  ['m-titolo','m-localita','m-valore','m-committente','m-architetto','m-gc','m-gancio'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-inserito').value='';
+  document.getElementById('m-resp').value='';
+  document.querySelectorAll('.m-servizio').forEach(c=>c.checked=false);
+  const ok = document.getElementById('manual-ok');
+  ok.style.display='inline'; setTimeout(()=>ok.style.display='none',2000);
+  renderPipeline();
+}
+
 function renderPipeline() {
   const tipo = document.getElementById('f-tipo').value;
   const status = document.getElementById('f-status').value;
   const resp = document.getElementById('f-resp').value;
   const filtered = pipeline.filter(o =>
-    (!tipo||o.tipo===tipo) && (!status||o.status===status) && (!resp||o.responsabile===resp)
+    (!tipo||o.tipo===tipo) && (!status||o.status===status) && (!resp||o.responsabile===resp||o.inseritoDa===resp)
   );
   document.getElementById('m-tot').textContent = pipeline.length;
   document.getElementById('m-new').textContent = pipeline.filter(o=>o.status==='Nuova').length;
-  document.getElementById('m-qual').textContent = pipeline.filter(o=>o.status==='Qualificata').length;
-  document.getElementById('m-ass').textContent = pipeline.filter(o=>o.status==='Assegnata').length;
+  document.getElementById('m-qual').textContent = pipeline.filter(o=>o.status==='In corso').length;
+  document.getElementById('m-ass').textContent = pipeline.filter(o=>o.status==='Chiusa').length;
   const list = document.getElementById('pipeline-list');
   if(!filtered.length){
     list.innerHTML=`<div class="empty"><div class="empty-icon">◎</div><div class="empty-text">Nessuna opportunità trovata con questi filtri.</div></div>`;
@@ -567,6 +689,7 @@ function renderPipeline() {
             <span>📍 ${o.localita}</span>
             <span>📅 ${o.data}</span>
             <span>💶 ${o.valore}</span>
+            ${o.inseritoDa?`<span>👤 Segnalato da <strong>${o.inseritoDa}</strong></span>`:''}
           </div>
         </div>
         <div class="card-right">
@@ -579,18 +702,26 @@ function renderPipeline() {
         🏢 ${o.committente} &nbsp;·&nbsp; ✏️ ${o.architetto} &nbsp;·&nbsp; 🔨 ${o.gc}
       </div>
       <div class="card-bottom">
-        <div class="tags">${o.servizi.map(s=>`<span class="tag">${s}</span>`).join('')}</div>
-        <div class="avatar-sm ${avClass(o.responsabile)}">${avInit(o.responsabile)}</div>
-        <span class="card-footer-name">${avFull(o.responsabile)}</span>
-        <select class="status-select" onchange="updateStatus(${o.id},this.value)">
-          ${['Nuova','Qualificata','Assegnata','Archiviata'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}
-        </select>
+        <div class="tags">${(o.servizi||[]).map(s=>`<span class="tag">${s}</span>`).join('')}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+          <span style="font-size:11px;color:var(--text-muted);">Resp.</span>
+          <select class="status-select" onchange="updateResp(${o.id},this.value)" style="max-width:110px;">
+            <option value="">— Scegli —</option>
+            ${VENDITORI.map(v=>`<option ${o.responsabile===v?'selected':''}>${v}</option>`).join('')}
+          </select>
+          <select class="status-select" onchange="updateStatus(${o.id},this.value)">
+            ${STATI.map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
       </div>
     </div>`).join('');
 }
 
 function updateStatus(id,val){
   const o=pipeline.find(x=>x.id===id); if(o){o.status=val;renderPipeline();}
+}
+function updateResp(id,val){
+  const o=pipeline.find(x=>x.id===id); if(o){o.responsabile=val;renderPipeline();}
 }
 
 // ── ANALISI AI ────────────────────────────────────────────────────────────────
@@ -640,9 +771,10 @@ async function analyzeText() {
           <div class="form-field">
             <label>Responsabile</label>
             <select id="edit-resp">
-              <option value="Giulia" ${p.responsabile==='Giulia'?'selected':''}>Giulia Baccelli</option>
-              <option value="Massimo" ${p.responsabile==='Massimo'?'selected':''}>Massimo Corti</option>
-              <option value="Sandro" ${p.responsabile==='Sandro'?'selected':''}>Sandro Ramer</option>
+              <option value="">— Scegli —</option>
+              <option value="Giulia">Giulia Baccelli</option>
+              <option value="Massimo">Massimo Corti</option>
+              <option value="Sandro">Sandro Ramer</option>
             </select>
           </div>
           <div class="form-field">
@@ -659,7 +791,7 @@ async function analyzeText() {
           <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;">
             ${serviziOpts.map(s=>`
               <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;padding:5px 11px;border:1px solid var(--border);border-radius:20px;background:var(--surface);">
-                <input type="checkbox" value="${s}" ${p.servizi&&p.servizi.includes(s)?'checked':''} style="accent-color:var(--gold-dark);"> ${s}
+                <input type="checkbox" value="${s}" style="accent-color:var(--gold-dark);"> ${s}
               </label>`).join('')}
           </div>
         </div>
@@ -693,7 +825,7 @@ function addToPipeline(){
     id:Date.now(), titolo:p.titolo, localita:p.localita, tipo:p.tipo,
     valore:p.valore, status, committente:p.committente,
     architetto:p.architetto, gc:p.gc, gancio,
-    servizi, responsabile:resp, data:today()
+    servizi, responsabile:resp, inseritoDa:'GT Market Intelligence', data:today()
   });
   lastAnalyzed=null;
   document.getElementById('raw-text').value='';

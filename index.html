@@ -607,11 +607,20 @@ async function loadFromSheets() {
       architetto: row['architetto'] || '—',
       gc: row['gc'] || '—',
       gancio: row['gancio'] || '—',
+      notaStrategica: row['notaStrategica'] || '',
       servizi: Array.isArray(row['servizi']) ? row['servizi'] : [],
       responsabile: row['responsabile'] || '—',
       inseritoDa: row['inseritoDa'] || 'GT Market Intelligence',
       data: row['data'] || '—'
-    })).filter(r => r.titolo && r.titolo !== '—');
+    })).filter(r => {
+      if (!r.titolo || r.titolo === '—') return false;
+      const t = (r.titolo + ' ' + r.gancio).toLowerCase();
+      const skipWords = ['skip','inapplicabile','non pertinente','non rilevante','nessuna opportunità','irrilevante','non applicabile','beni culturali - inapp'];
+      if (skipWords.some(w => t.includes(w))) return false;
+      const irrelevantTopics = ['viadotto','tranvia','marciapiede','fognatura','pista ciclabile','ciclabile','illuminazione pubblica','asfalto stradale'];
+      if (irrelevantTopics.some(w => t.includes(w))) return false;
+      return true;
+    });
     renderPipeline();
     document.getElementById('pipeline-sub').textContent = 'Dati in tempo reale da Google Sheets · Aggiornato ' + new Date().toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit'});
   } catch(err) {
@@ -733,6 +742,7 @@ function renderPipeline() {
         </div>
       </div>
       <div class="gancio-box"><strong>Gancio commerciale GT</strong>${o.gancio}</div>
+      ${o.notaStrategica ? `<div class="gancio-box" style="background:var(--teal-light);border-left-color:var(--teal);"><strong style="color:var(--teal);">Come arrivare alla committenza</strong><span style="color:var(--text);">${o.notaStrategica}</span></div>` : ''}
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
         🏢 ${o.committente} &nbsp;·&nbsp; ✏️ ${o.architetto} &nbsp;·&nbsp; 🔨 ${o.gc}
       </div>

@@ -592,6 +592,13 @@ const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbygRZo-5IsXptxSKnQxw
 
 let pipeline = [];
 
+function cleanField(val) {
+  if (!val) return '—';
+  const s = val.toString();
+  if (s.includes('"titolo"') || s.includes('```json') || s.length > 60) return '—';
+  return s;
+}
+
 async function loadFromSheets() {
   try {
     const res = await fetch(SHEETS_URL);
@@ -604,8 +611,8 @@ async function loadFromSheets() {
       valore: row['valore'] || 'N.D.',
       status: row['status'] || 'Nuova',
       committente: row['committente'] || '—',
-      architetto: row['architetto'] || '—',
-      gc: row['gc'] || '—',
+      architetto: cleanField(row['architetto']),
+      gc: cleanField(row['gc']),
       gancio: row['gancio'] || '—',
       notaStrategica: row['notaStrategica'] || '',
       servizi: Array.isArray(row['servizi']) ? row['servizi'] : [],

@@ -598,20 +598,20 @@ async function loadFromSheets() {
     const data = await res.json();
     pipeline = data.map((row, i) => ({
       id: i + 1,
-      titolo: row['Titolo'] || row['C'] || '—',
-      localita: row['Località'] || row['D'] || '—',
-      tipo: row['Tipo'] || row['E'] || 'Hospitality',
-      valore: row['Valore'] || row['F'] || 'N.D.',
-      status: row['Stato'] || row['M'] || 'Nuova',
-      committente: row['Committente'] || row['G'] || '—',
-      architetto: row['Architetto'] || row['H'] || '—',
-      gc: row['GC'] || row['I'] || '—',
-      gancio: row['Gancio GT'] || row['J'] || '—',
-      servizi: (row['Servizi'] || row['K'] || '').split(',').map(s=>s.trim()).filter(Boolean),
-      responsabile: row['Responsabile'] || row['L'] || '—',
-      inseritoDa: row['Inserito da'] || 'GT Market Intelligence',
-      data: row['Data'] || row['B'] || '—'
-    })).filter(r => r.titolo && r.titolo !== '—' && r.titolo !== 'Titolo');
+      titolo: row['titolo'] || '—',
+      localita: row['localita'] || '—',
+      tipo: row['tipo'] || 'Hospitality',
+      valore: row['valore'] || 'N.D.',
+      status: row['status'] || 'Nuova',
+      committente: row['committente'] || '—',
+      architetto: row['architetto'] || '—',
+      gc: row['gc'] || '—',
+      gancio: row['gancio'] || '—',
+      servizi: Array.isArray(row['servizi']) ? row['servizi'] : [],
+      responsabile: row['responsabile'] || '—',
+      inseritoDa: row['inseritoDa'] || 'GT Market Intelligence',
+      data: row['data'] || '—'
+    })).filter(r => r.titolo && r.titolo !== '—');
     renderPipeline();
     document.getElementById('pipeline-sub').textContent = 'Dati in tempo reale da Google Sheets · Aggiornato ' + new Date().toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit'});
   } catch(err) {

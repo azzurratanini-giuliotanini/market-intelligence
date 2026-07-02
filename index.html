@@ -227,9 +227,6 @@
       <div class="nav-item" onclick="goTo('report',this)">
         <span class="nav-icon">▤</span> Report settimanale
       </div>
-      <div class="nav-item" onclick="goTo('mappa',this)">
-        <span class="nav-icon">◉</span> Mappa cantieri
-      </div>
     </nav>
     <div class="sidebar-footer">
       <div class="week-badge">Settimana del<br><span id="week-date">—</span></div>
@@ -270,7 +267,11 @@
         <select onchange="renderPipeline()" id="f-tipo"><option value="">Tutte le tipologie</option><option>Hospitality</option><option>Residenziale</option><option>Retail</option><option>Corporate</option><option>Bando PA</option></select>
         <select onchange="renderPipeline()" id="f-status"><option value="">Tutti gli stati</option><option>Nuova</option><option>Contattata</option><option>In corso</option><option>Persa</option><option>Chiusa</option></select>
         <select onchange="renderPipeline()" id="f-resp"><option value="">Tutti i responsabili</option><option value="GT Market Intelligence">GT Market Intelligence</option><option value="Giulia">Giulia</option><option value="Massimo">Massimo</option><option value="Sandro">Sandro</option><option value="Gabriella">Gabriella</option><option value="Laura">Laura</option><option value="Caterina">Caterina</option><option value="Lorenzo">Lorenzo</option><option value="Luigi">Luigi</option><option value="Gianluca">Gianluca</option><option value="Lorenza">Lorenza</option><option value="Michele">Michele</option><option value="Daniele">Daniele</option><option value="Antonella">Antonella</option></select>
-        <div style="flex:1"></div>
+        <select onchange="renderPipeline()" id="f-sort">
+          <option value="data-desc">Più recenti prima</option>
+          <option value="score-desc">Score più alto</option>
+          <option value="data-asc">Più vecchi prima</option>
+        </select>
         <button class="btn" onclick="loadFromSheets()" style="margin-right:8px;">↻ Aggiorna</button>
         <button class="btn" onclick="toggleManualForm()" id="btn-manual">+ Inserimento manuale</button>
         <button class="btn btn-gold" onclick="goTo('analisi', document.querySelector('[onclick*=analisi]'))">+ Analisi AI</button>
@@ -758,6 +759,12 @@ function goTo(name, el) {
   if(name==='mappa') renderMappa();
 }
 
+function searchApollo(committente, architetto) {
+  const target = committente && committente !== '—' ? committente : architetto;
+  const query = encodeURIComponent((target || '') + ' Italy');
+  window.open('https://app.apollo.io/#/people?q=' + query, '_blank');
+}
+
 function renderMappa() {
   const aree = {};
   pipeline.filter(o=>o.status!=='Archiviata').forEach(o => {
@@ -831,9 +838,13 @@ function renderPipeline() {
   const tipo = document.getElementById('f-tipo').value;
   const status = document.getElementById('f-status').value;
   const resp = document.getElementById('f-resp').value;
-  const filtered = pipeline.filter(o =>
+  const sort = document.getElementById('f-sort')?.value || 'data-desc';
+  let filtered = pipeline.filter(o =>
     (!tipo||o.tipo===tipo) && (!status||o.status===status) && (!resp||o.responsabile===resp||o.inseritoDa===resp)
   );
+  if (sort === 'score-desc') filtered.sort((a,b) => scoreOpportunita(b) - scoreOpportunita(a));
+  else if (sort === 'data-asc') filtered.sort((a,b) => new Date(a.data) - new Date(b.data));
+  else filtered.sort((a,b) => new Date(b.data) - new Date(a.data));
   document.getElementById('m-tot').textContent = pipeline.length;
   document.getElementById('m-new').textContent = pipeline.filter(o=>o.status==='Nuova').length;
   document.getElementById('m-qual').textContent = pipeline.filter(o=>o.status==='In corso').length;
@@ -890,6 +901,7 @@ function renderPipeline() {
           <button onclick="addContactNote(${o.id})" style="font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text-muted);">📞 Nota</button>
           <button onclick="generateEmailBozza(${o.id})" style="font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text-muted);">✉️ Bozza email</button>
           <button onclick="markNonPertinente(${o.id})" style="font-size:11px;padding:4px 8px;border:1px solid var(--coral-light);border-radius:var(--radius-sm);background:var(--coral-light);cursor:pointer;color:var(--coral);">✕ Non pertinente</button>
+          <button onclick="searchApollo('${(o.committente||'').replace(/'/g,'')}', '${(o.architetto||'').replace(/'/g,'')}')" style="font-size:11px;padding:4px 8px;border:1px solid var(--purple-light);border-radius:var(--radius-sm);background:var(--purple-light);cursor:pointer;color:var(--purple);">👤 Trova contatto</button>
           <span style="font-size:11px;color:var(--text-muted);">Resp.</span>
           <select class="status-select" onchange="updateResp(${o.id},this.value)" style="max-width:110px;">
             <option value="">— Scegli —</option>

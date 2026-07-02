@@ -796,8 +796,6 @@ function renderMappa() {
 const VENDITORI = ['GT Market Intelligence','Gabriella','Laura','Caterina','Lorenzo','Giulia','Luigi','Gianluca','Lorenza','Michele','Daniele','Antonella','Massimo','Sandro'];
 const STATI = ['Nuova','Contattata','In corso','Persa','Chiusa'];
 
-function dotClass(s) { return {Nuova:'dot-N',Contattata:'dot-A',['In corso']:'dot-Q',Persa:'dot-Ar',Chiusa:'dot-Q'}[s]||'dot-Ar'; }
-
 function toggleManualForm() {
   const f = document.getElementById('manual-form');
   f.style.display = f.style.display==='none' ? 'block' : 'none';

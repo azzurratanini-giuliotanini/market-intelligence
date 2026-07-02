@@ -227,6 +227,9 @@
       <div class="nav-item" onclick="goTo('report',this)">
         <span class="nav-icon">▤</span> Report settimanale
       </div>
+      <div class="nav-item" onclick="goTo('mappa',this)">
+        <span class="nav-icon">◉</span> Mappa cantieri
+      </div>
     </nav>
     <div class="sidebar-footer">
       <div class="week-badge">Settimana del<br><span id="week-date">—</span></div>
@@ -482,6 +485,15 @@
       <div id="report-area"></div>
     </div>
 
+    <!-- MAPPA -->
+    <div id="sec-mappa" class="section">
+      <div class="page-header">
+        <div class="page-title">Mappa cantieri</div>
+        <div class="page-sub">Distribuzione geografica delle opportunità attive</div>
+      </div>
+      <div id="mappa-list" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;"></div>
+    </div>
+
   </main>
 </div>
 
@@ -589,8 +601,89 @@ Analizza il testo e rispondi SOLO con un JSON valido, zero testo fuori:
 }`;
 
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbygRZo-5IsXptxSKnQxwJVcWZW1owa4f5e0XTgcLQQkKaabN3VcOsijkpw-msYGomuWwg/exec';
+const ESCLUSI_URL = 'https://script.google.com/macros/s/AKfycbygRZo-5IsXptxSKnQxwJVcWZW1owa4f5e0XTgcLQQkKaabN3VcOsijkpw-msYGomuWwg/exec?sheet=Esclusi';
 
 let pipeline = [];
+let excludedKeywords = [];
+let contactHistory = JSON.parse(localStorage.getItem('gt_contacts') || '{}');
+
+function scoreOpportunita(o) {
+  let score = 0;
+  if (o.tipo === 'Hospitality') score += 3;
+  else if (o.tipo === 'Residenziale') score += 3;
+  else if (o.tipo === 'Retail') score += 2;
+  else if (o.tipo === 'Ospedale') score += 2;
+  else if (o.tipo === 'Studentato') score += 1;
+  else if (o.tipo === 'Bando PA') score += 1;
+  if (o.urgenza === 'Alta') score += 3;
+  else if (o.urgenza === 'Media') score += 2;
+  else score += 1;
+  const v = parseFloat((o.valore||'0').replace(/[^0-9.]/g,''));
+  if (v > 3000000) score += 3;
+  else if (v > 1000000) score += 2;
+  else if (v > 0) score += 1;
+  const watchNames = ['Pierattelli','Bonan','Dimore','Savio','Giraldi','Fragola','Weber','Cogefa','CMSA','Carron','Roccoforte','Manifattura','Ferragamo','YSL'];
+  if (watchNames.some(n => (o.committente+o.architetto+o.gc).includes(n))) score += 2;
+  return Math.min(score, 10);
+}
+
+function scoreColor(s) {
+  if (s >= 8) return 'var(--coral)';
+  if (s >= 5) return 'var(--amber)';
+  return 'var(--green)';
+}
+
+async function markNonPertinente(id) {
+  const o = pipeline.find(x => x.id === id);
+  if (!o) return;
+  const keywords = o.titolo.toLowerCase().split(' ').filter(w => w.length > 4).slice(0, 3);
+  excludedKeywords.push(...keywords);
+  localStorage.setItem('gt_excluded', JSON.stringify(excludedKeywords));
+  pipeline = pipeline.filter(x => x.id !== id);
+  renderPipeline();
+  try {
+    await fetch(SHEETS_URL + '?action=exclude&keywords=' + encodeURIComponent(keywords.join(',')));
+  } catch(e) {}
+  const msg = document.createElement('div');
+  msg.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--coral);color:white;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;';
+  msg.textContent = '✕ Rimosso — il sistema imparerà a escludere notizie simili';
+  document.body.appendChild(msg);
+  setTimeout(() => msg.remove(), 3000);
+}
+
+function addContactNote(id) {
+  const o = pipeline.find(x => x.id === id);
+  if (!o) return;
+  const note = prompt(`Nota contatto per "${o.titolo}":\n(es. "Chiamato architetto, richiamano la settimana prossima")`);
+  if (!note) return;
+  if (!contactHistory[id]) contactHistory[id] = [];
+  contactHistory[id].push({ data: today(), nota: note });
+  localStorage.setItem('gt_contacts', JSON.stringify(contactHistory));
+  renderPipeline();
+}
+
+async function generateEmailBozza(id) {
+  const o = pipeline.find(x => x.id === id);
+  if (!o) return;
+  const resp = o.responsabile && o.responsabile !== '—' ? o.responsabile : 'il nostro team';
+  const bozza = `Oggetto: GiulioTanini Group — ${o.titolo}
+
+Gentile ${o.committente !== '—' ? o.committente : 'referente'},
+
+Ho seguito con interesse il progetto "${o.titolo}" a ${o.localita} e ritengo vi siano interessanti sinergie con i servizi di GiulioTanini Group.
+
+Siamo specializzati in ${o.gancio || 'soluzioni su misura per cantieri di alto livello'} — con referenze consolidate nel settore ${o.tipo} in Toscana e Milano.
+
+Sarebbe un piacere fissare un breve incontro per presentarvi le nostre soluzioni.
+
+Resto a disposizione,
+${resp}
+GiulioTanini Group`;
+  
+  const win = window.open('', '_blank');
+  win.document.write(`<pre style="font-family:Arial;padding:20px;white-space:pre-wrap;">${bozza}</pre>`);
+  win.document.close();
+}
 
 function cleanField(val) {
   if (!val) return '—';
@@ -662,6 +755,34 @@ function goTo(name, el) {
   if(name==='watchlist') renderWatchlist();
   if(name==='keywords') renderKeywords();
   if(name==='report') generateReport();
+  if(name==='mappa') renderMappa();
+}
+
+function renderMappa() {
+  const aree = {};
+  pipeline.filter(o=>o.status!=='Archiviata').forEach(o => {
+    const area = o.localita.split(',')[0].trim() || 'Non specificata';
+    if (!aree[area]) aree[area] = [];
+    aree[area].push(o);
+  });
+  const list = document.getElementById('mappa-list');
+  if (!Object.keys(aree).length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">◉</div><div class="empty-text">Nessun cantiere da mostrare.</div></div>';
+    return;
+  }
+  list.innerHTML = Object.entries(aree).sort((a,b)=>b[1].length-a[1].length).map(([area, opps]) => `
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:15px;font-weight:500;color:var(--text);">📍 ${area}</div>
+        <span style="font-size:12px;background:var(--gold-light);color:var(--gold-dark);padding:3px 10px;border-radius:20px;font-weight:500;">${opps.length} cantier${opps.length===1?'e':'i'}</span>
+      </div>
+      ${opps.map(o=>`
+        <div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+          <span class="badge ${badgeClass(o.tipo)}" style="font-size:10px;">${o.tipo}</span>
+          <span style="font-size:12px;color:var(--text);flex:1;">${o.titolo}</span>
+          <span style="font-size:11px;font-weight:700;color:${scoreColor(scoreOpportunita(o))};">${scoreOpportunita(o)}/10</span>
+        </div>`).join('')}
+    </div>`).join('');
 }
 
 // ── PIPELINE ──────────────────────────────────────────────────────────────────
@@ -731,16 +852,22 @@ function renderPipeline() {
     list.innerHTML=`<div class="empty"><div class="empty-icon">◎</div><div class="empty-text">Nessuna opportunità trovata con questi filtri.</div></div>`;
     return;
   }
-  list.innerHTML = filtered.map(o=>`
+  list.innerHTML = filtered.map(o=>{
+    const score = scoreOpportunita(o);
+    const history = contactHistory[o.id] || [];
+    return `
     <div class="card">
       <div class="card-top">
         <div>
-          <div class="card-title">${o.titolo}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <div class="card-title">${o.titolo}</div>
+            <div style="font-size:11px;font-weight:700;color:${scoreColor(score)};background:${scoreColor(score)}18;padding:2px 8px;border-radius:20px;flex-shrink:0;">Score ${score}/10</div>
+          </div>
           <div class="card-meta">
             <span>📍 ${o.localita}</span>
             <span>📅 ${o.data}</span>
             <span>💶 ${o.valore}</span>
-            ${o.inseritoDa?`<span>👤 Segnalato da <strong>${o.inseritoDa}</strong></span>`:''}
+            ${o.inseritoDa?`<span>👤 <strong>${o.inseritoDa}</strong></span>`:''}
           </div>
         </div>
         <div class="card-right">
@@ -753,9 +880,16 @@ function renderPipeline() {
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
         🏢 ${o.committente} &nbsp;·&nbsp; ✏️ ${o.architetto} &nbsp;·&nbsp; 🔨 ${o.gc}
       </div>
+      ${history.length > 0 ? `<div style="background:var(--bg);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:10px;font-size:12px;">
+        <div style="font-weight:500;color:var(--text-muted);margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;">Storico contatti</div>
+        ${history.map(h=>`<div style="color:var(--text);padding:2px 0;border-bottom:1px solid var(--border);">📞 <span style="color:var(--text-muted);">${h.data}</span> — ${h.nota}</div>`).join('')}
+      </div>` : ''}
       <div class="card-bottom">
         <div class="tags">${(o.servizi||[]).map(s=>`<span class="tag">${s}</span>`).join('')}</div>
-        <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;">
+          <button onclick="addContactNote(${o.id})" style="font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text-muted);">📞 Nota</button>
+          <button onclick="generateEmailBozza(${o.id})" style="font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text-muted);">✉️ Bozza email</button>
+          <button onclick="markNonPertinente(${o.id})" style="font-size:11px;padding:4px 8px;border:1px solid var(--coral-light);border-radius:var(--radius-sm);background:var(--coral-light);cursor:pointer;color:var(--coral);">✕ Non pertinente</button>
           <span style="font-size:11px;color:var(--text-muted);">Resp.</span>
           <select class="status-select" onchange="updateResp(${o.id},this.value)" style="max-width:110px;">
             <option value="">— Scegli —</option>
@@ -766,7 +900,7 @@ function renderPipeline() {
           </select>
         </div>
       </div>
-    </div>`).join('');
+    </div>`}).join('');
 }
 
 function updateStatus(id,val){
